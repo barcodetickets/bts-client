@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/BTS_Sales">
+        <file>rsrc/accept.png</file>
+        <file>rsrc/cancel.png</file>
+        <file>rsrc/disconnect.png</file>
+        <file>rsrc/key.png</file>
+        <file>rsrc/lock_unlock.png</file>
+        <file>rsrc/stop.png</file>
+        <file>rsrc/webcam.png</file>
+    </qresource>
+</RCC>
