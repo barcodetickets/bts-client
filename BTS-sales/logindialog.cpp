@@ -1,4 +1,5 @@
 #include "logindialog.h"
+#include "api.h"
 #include <QtGui>
 
 LoginDialog::LoginDialog(QWidget *parent): QDialog(parent)
@@ -12,7 +13,12 @@ LoginDialog::~LoginDialog(){
 }
 
 void LoginDialog::on_loginButton_clicked(){
-	if(!ui.password->text().compare("asdfqwer")){
+	QMap <QString, QString> map;
+	map["password"] = ui.password->text();
+	map["username"] = ui.username->text();
+	api_request("/api/access/login/", map);
+	
+	/*if(!ui.password->text().compare("asdfqwer")){
 		ui.username->setEnabled(false);
 		ui.password->setEnabled(false);
 		ui.loginButton->setEnabled(false);
@@ -22,7 +28,7 @@ void LoginDialog::on_loginButton_clicked(){
 		
 		ui.password->clear();
 		this->done(DialogCode::Rejected);
-	}
+	}*/
 }
 
 void LoginDialog::on_logoutButton_clicked(){

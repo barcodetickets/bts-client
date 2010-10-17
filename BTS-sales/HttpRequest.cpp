@@ -23,13 +23,17 @@ HttpRequest::~HttpRequest(){
 void HttpRequest::finishedSlot(QNetworkReply* reply){
 
 	QVariant statusCodeV = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+	QByteArray data = reply->readAll();
+	QString response(data);
+
 	std::cout << "HTTP response (" << statusCodeV.toInt() << ")\n";
+	
 	if(reply->error() == QNetworkReply::NoError){
-		QByteArray data = reply->readAll();
-		QString response(data);
+		
 		std::cout << "HTTP response (" << statusCodeV.toInt() << "): " << response.toStdString() << endl;
 	}else{
 		if(reply->error() == 202) std::cout << "error 403!!!\n";
-		std::cout << "error " << (int)reply->error() + "\n";
+		//std::cout << "error " << (int)reply->error() + "\n";
 	}
+	std::cout << response.toStdString() + "\n";
 }

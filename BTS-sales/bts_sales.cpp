@@ -74,11 +74,9 @@ BTS_Sales::BTS_Sales(QWidget *parent, Qt::WFlags flags)
 	loginStatusText->setLineWidth(3);
 
 	console_open();
+	config_load();
 
-	QMap <QString, QString> map;
-	map["password"] = "asdfqwer";
-	map["username"] = "kirillp";
-	api_request("/api/access/login/", map);
+	
 	//map["testparam"] = "sdfsdf";
 	//map["asdf"] = "zzz";
 

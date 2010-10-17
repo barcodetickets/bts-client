@@ -16,15 +16,17 @@
 
 static QString hmac_sha1(const QString &key, const QString &secret);
 
-char *api_key = "24e8a7c5cd1087083c9c8d5a378ba102496a503b96fbd4fbbe21e452bcbdba7b";
-char *g_url = "http://bts.rhhsstuco.org/public";
-char *sys_name = "testing";
+
+char g_api_key[65];
+char g_sys_name[65];
+// length of server url cannot exceed 255 characters!
+char g_server_url[256];
 
 void api_request(QString api, QMap<QString, QString> params){
-	QString request = g_url + api + "?";
+	QString request = g_server_url + api + "?";
 	
 	params["timestamp"] = QDateTime::currentDateTime().toUTC().toString("yyyyMMddhhmmss");
-	params["sysName"] = sys_name;
+	params["sysName"] = g_sys_name;
 
 	QMapIterator<QString, QString> i(params);
 	while (i.hasNext()) {
@@ -35,7 +37,7 @@ void api_request(QString api, QMap<QString, QString> params){
 		request += "&";
 	}
 	
-	request += "signature=" + signature_make("GET", g_url, api, params, api_key);
+	request += "signature=" + signature_make("GET", g_server_url, api, params, g_api_key);
 	request += "&format=xml";
 	
 	std::cout << request.toStdString() + "\n";
@@ -79,7 +81,24 @@ QString signature_make(QString http_verb, QString hostname, QString url, QMap<QS
 	return sig;
 }
 
+int config_load(){
+	char path[MAX_PATH + 16];
 
+	GetCurrentDirectoryA(MAX_PATH, path);
+	strcat_s(path, MAX_PATH + 16, "\\bts.ini");
+	printf("[config_load] ini path: %s\n", path);
+
+	GetPrivateProfileStringA("system", "api_key", "undefined", g_api_key, 65, path);
+	printf("[config_load] api_key = %s\n", g_api_key);
+
+	GetPrivateProfileStringA("system", "sys_name", "undefined", g_sys_name, 65, path);
+	printf("[config_load] sys_name = %s\n", g_sys_name);
+
+	GetPrivateProfileStringA("system", "server_location", "undefined", g_server_url, 256, path);
+	printf("[config_load] server_url = %s\n", g_server_url);
+
+	return 0;
+}
 
 /**
  * Hashes the given string using the HMAC-SHA1 algorithm.
