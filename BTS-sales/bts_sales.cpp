@@ -1,12 +1,13 @@
-// icons from http://www.iconlet.com/info/26821_Minus_128x128 
-
 #include "BTS_Sales.h"
 #include "logindialog.h"
+#include "api.h"
+
 #include <zbar/zbar.h>
 #include <zbar/zbar/QZBar.h>
 #include <QtGui>
 #include <QtDebug>
 #include <windows.h>
+#include <iostream>
 //#include <zbar/include/zbar/QZBar.h>
 
 //BTS_Sales temp;
@@ -71,6 +72,18 @@ BTS_Sales::BTS_Sales(QWidget *parent, Qt::WFlags flags)
 	loginStatusText->setText(tr("Not connected. Please log in."));
 	ui.statusBar->addWidget(loginStatusText);
 	loginStatusText->setLineWidth(3);
+
+	console_open();
+
+	QMap <QString, QString> map;
+	map["password"] = "asdfqwer";
+	map["username"] = "kirillp";
+	api_request("/api/access/login/", map);
+	//map["testparam"] = "sdfsdf";
+	//map["asdf"] = "zzz";
+
+	//signature_make("GET", "bts.example.com", "/api/access/login/", map, 
+	//	"60026e856a7c93c1b459091a13e99db52315c6c97f5ecd1d3410c9f18ebccbb9");
 }
 
 BTS_Sales::~BTS_Sales()

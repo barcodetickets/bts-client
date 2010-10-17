@@ -4,6 +4,7 @@
 LoginDialog::LoginDialog(QWidget *parent): QDialog(parent)
 {
 	ui.setupUi(this);
+	ui.server->setText("http://bts.rhhsstuco.org/public/");
 }
 
 LoginDialog::~LoginDialog(){
