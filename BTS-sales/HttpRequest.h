@@ -7,8 +7,11 @@ class HttpRequest : public QObject{
 	Q_OBJECT
 
 public:
-	HttpRequest(QString url);
+	HttpRequest(QUrl url);
 	~HttpRequest();
+	QNetworkReply *getNetworkReply();
+private:
+	QNetworkReply *reply;
 
 private slots:
 	void finishedSlot(QNetworkReply* reply);

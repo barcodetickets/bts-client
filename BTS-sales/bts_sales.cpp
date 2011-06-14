@@ -1,5 +1,6 @@
 #include "BTS_Sales.h"
 #include "logindialog.h"
+#include "manualcheckin.h"
 #include "api.h"
 
 #include <zbar/zbar.h>
@@ -44,15 +45,10 @@ BTS_Sales::BTS_Sales(QWidget *parent, Qt::WFlags flags)
 	//ui.ticketID->append("sdfsdf");
 	
 	QStringList headerTitles;
-	headerTitles << "Ticket #" << "Student #" << "Name";
+	headerTitles << "Ticket #" << "Student Name" << "Time";
 	ui.recentTicketsList->setHeaderLabels(headerTitles);
 	
-	QStringList testRow, testRow2;
-	testRow << "123" << "0987654321" << "John Doe";
-	ui.recentTicketsList->addTopLevelItem(new QTreeWidgetItem(testRow));
-	testRow2 << "124" << "8347246126" << "Jane Doe";
-	ui.recentTicketsList->addTopLevelItem(new QTreeWidgetItem(testRow2));
-
+	
 	//ui.recentTicketsList->addColumn("Ticket #");
 	//ui.recentTicketsList->addColumn("Student #");
 	//ui.recentTicketsList->addColumn("Name");
@@ -72,8 +68,17 @@ BTS_Sales::BTS_Sales(QWidget *parent, Qt::WFlags flags)
 	loginStatusText->setText(tr("Not connected. Please log in."));
 	ui.statusBar->addWidget(loginStatusText);
 	loginStatusText->setLineWidth(3);
+	
+	ui.ticketID->setText("");
+	ui.studentID->setText("");
+	ui.firstName->setText("");
+	ui.lastName->setText("");
+	ui.barcodeStatusLabel->setText("Please log in.");
+	ui.barcodeStatusLabel->setStyleSheet(GUI_STATUS_COLOR_RED);
+	ui.ticketNum->setText("");
+	ui.ticketStatus->setText("");
 
-	console_open();
+	//console_open();
 	config_load();
 
 	
@@ -98,6 +103,15 @@ void BTS_Sales::on_actionLogin_triggered(){
 		loginStatusIcon->setPixmap(QPixmap::QPixmap(":/BTS_Sales/rsrc/accept.png"));
 		ui.actionLogout->setEnabled(true);
 		ui.actionLogin->setEnabled(false);
+		ui.checkInButton->setEnabled(true);
+		ui.clearButton->setEnabled(true);
+		//ui.actionManualCheckin->setEnabled(true);
+		ui.actionCheckIn->setEnabled(true);
+		ui.actionClear->setEnabled(true);
+		ui.studentID->setFocus();
+
+		ui.barcodeStatusLabel->setText("Ready to scan.");
+		ui.barcodeStatusLabel->setStyleSheet(GUI_STATUS_COLOR_YELLOW);
 	}else{
 		loginStatusText->setText(tr("Password or username incorrect."));
 		loginStatusIcon->setPixmap(QPixmap::QPixmap(":/BTS_Sales/rsrc/cancel.png"));
@@ -106,10 +120,58 @@ void BTS_Sales::on_actionLogin_triggered(){
 }
 
 void BTS_Sales::on_actionLogout_triggered(){
-	ui.actionLogout->setEnabled(false);
-	ui.actionLogin->setEnabled(true);
-	loginStatusIcon->setPixmap(QPixmap::QPixmap(":/BTS_Sales/rsrc/disconnect.png"));
-	loginStatusText->setText(tr("Not connected. Please log in."));
+	if(!api_logout()){
+		ui.actionLogout->setEnabled(false);
+		ui.actionLogin->setEnabled(true);
+		loginStatusIcon->setPixmap(QPixmap::QPixmap(":/BTS_Sales/rsrc/disconnect.png"));
+		loginStatusText->setText(tr("Not connected. Please log in."));
+		ui.checkInButton->setEnabled(false);
+		ui.clearButton->setEnabled(false);
+		//ui.actionManualCheckin->setEnabled(false);
+		ui.actionCheckIn->setEnabled(false);
+		ui.actionClear->setEnabled(false);
+		
+		ui.ticketID->setText("");
+		ui.studentID->setText("");
+		ui.firstName->setText("");
+		ui.lastName->setText("");
+		ui.barcodeStatusLabel->setText("Please log in.");
+		ui.barcodeStatusLabel->setStyleSheet(GUI_STATUS_COLOR_RED);
+		ui.ticketNum->setText("");
+		ui.ticketStatus->setText("");
+	}
+}
+
+void BTS_Sales::on_manualButton_clicked(){
+	ManualCheckin d = new ManualCheckin(this);
+	d.setBTS(this);
+	d.show();
+
+	if(d.exec() == QDialog::DialogCode::Accepted){
+		
+	}else{
+
+	}
+}
+
+void BTS_Sales::on_checkInButton_clicked(){
+	if(ui.ticketID->text().count("-") == 3){
+		int result = api_checkin(ui.ticketID->text(), this);
+	}else if(ui.studentID->text().compare("")){
+		int result = api_checkin_id(ui.studentID->text(), QString(api_get_eventid()).toInt(), this);
+	}else if(ui.firstName->text().compare("") && ui.lastName->text().compare("")){
+		int result = api_checkin_name(ui.firstName->text(), ui.lastName->text(), QString(api_get_eventid()).toInt(), this);
+	}
+}
+
+void BTS_Sales::on_clearButton_clicked(){
+	ui.ticketID->setText("");
+	ui.studentID->setText("");
+	ui.firstName->setText("");
+	ui.lastName->setText("");
+	ui.ticketNum->setText("");
+	ui.ticketStatus->setText("");
+	ui.firstName->setFocus();
 }
 
 void BTS_Sales::on_zbarPreview_videoOpened(bool videoOpened){
@@ -119,15 +181,76 @@ void BTS_Sales::on_zbarPreview_videoOpened(bool videoOpened){
 }
 
 void BTS_Sales::on_zbarPreview_decodedText(const QString& data){
+	ui.ticketID->setText("");
+	ui.studentID->setText("");
+	ui.firstName->setText("");
+	ui.lastName->setText("");
+	ui.barcodeStatusLabel->setStyleSheet(GUI_STATUS_COLOR_YELLOW);
+	ui.barcodeStatusLabel->setText("Scanning...");
+	ui.ticketNum->setText("");
+	ui.ticketStatus->setText("");
+
 	if(data.startsWith(QString("QR-Code:"), Qt::CaseInsensitive)){
 		QString asdf = data;
 		asdf.remove(0, 8);
 		ui.ticketID->setText(asdf);
+		
+		if(ui.radioValidate->isChecked()){
+			int ret = api_validate_barcode(asdf);
+
+			if(HIWORD(ret) == STATUS_HTTP_OK){
+				switch(LOWORD(ret)){
+					case STATUS_BARCODE_ACTIVE:{
+						ui.barcodeStatusLabel->setText("Ticket is active. Validated!");
+						QStringList newRow;
+						newRow << asdf << "##########" << "John Doe";
+						ui.recentTicketsList->addTopLevelItem(new QTreeWidgetItem(newRow));
+						break;} 
+					case STATUS_BARCODE_INACTIVE:
+						ui.barcodeStatusLabel->setText("Inactive ticket!");
+						break;
+					case STATUS_BARCODE_CHECKEDIN:
+						ui.barcodeStatusLabel->setText("Already checked in!");
+						break;
+					case STATUS_BARCODE_REFUNDED:
+						ui.barcodeStatusLabel->setText("Ticket was refunded.");
+						break;
+					case STATUS_BARCODE_LOST_UNSOLD:
+					case STATUS_BARCODE_LOST_SOLD:
+						ui.barcodeStatusLabel->setText("Ticket was reported lost.");
+						break;
+					case STATUS_BARCODE_STOLEN:
+						ui.barcodeStatusLabel->setText("Ticket was stolen.");
+						break;
+					case STATUS_BARCODE_INVALIDX:
+						ui.barcodeStatusLabel->setText("Invalid ticket.");
+						break;
+
+				}
+			}
+		}else if(ui.radioCheckIn->isChecked()){
+			int ret = api_checkin_barcode(asdf, this);
+		}
+	}else if(data.startsWith(QString("Code-39:"), Qt::CaseInsensitive)){
+		QString asdf = data;
+		asdf.remove(0, 8);
+		if(ui.radioCheckIn->isChecked()){
+			int ret = api_checkin_id(asdf, QString(api_get_eventid()).toInt(), this);
+		}
 	}
 }
 
 void BTS_Sales::on_actionCapture_triggered(){ 
 	
+	//int ret = api_validate_barcode("1;2;53mgvQWPech+IMfHG2iu46cgKGw33U5DILFlB+IW4xg=");
+	//std::cout << ret << "\n";
+	/*if(ui.radioCheckIn->isChecked()){
+		//int ret = api_checkin_barcode("1;2;53mgvQWPech+IMfHG2iu46cgKGw33U5DILFlB+IW4xg=", this);
+		int ret = api_checkin_barcode("1;2;e9MGtmPwlef2UUepZkz8NZ+0fJinyJeSTXyw2DNJKEo=", this);
+	}
+	return;*/
+	
+	//return;
 	//CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ThreadProc, NULL, 0, NULL);
 	if(!zbarPreview->isVideoEnabled()){
 		zbarPreview->setVideoDevice("/dev/video0");
@@ -140,7 +263,9 @@ void BTS_Sales::on_actionCapture_triggered(){
 		zbarPreview->setVideoEnabled(0);
 		ui.actionCapture->setIcon(QIcon::QIcon(":/BTS_Sales/rsrc/webcam.png"));
 		ui.actionCapture->setText(QString("Start Capture"));
-	}
+	} 
+
+
 }
 
 Ui::BTS_SalesClass BTS_Sales::getUi(){

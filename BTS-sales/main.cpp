@@ -4,6 +4,8 @@
 //#pragma comment(lib, "libzbarqt.dll.a")
 #pragma comment(lib, "lib/qzbar.lib")
 #pragma comment(lib, "lib/libzbar-0.lib")
+#pragma comment(lib, "QtXml4.lib")
+#pragma comment(lib, "QtNetwork4.lib")
 
 int main(int argc, char *argv[])
 {

@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>285</width>
-    <height>360</height>
+    <width>272</width>
+    <height>450</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -39,10 +39,10 @@
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgba(253, 18, 18, 5);</string>
+      <string notr="true">image: url(:/rsrc/rsrc/stuco.png);</string>
      </property>
      <property name="text">
-      <string>Logo here</string>
+      <string/>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -81,7 +81,7 @@ color: black;</string>
           <string notr="true">background-color: rgb(255, 255, 255);</string>
          </property>
          <property name="text">
-          <string>username</string>
+          <string/>
          </property>
          <property name="cursorPosition">
           <number>0</number>
@@ -168,7 +168,7 @@ color: black;</string>
           <set>Qt::ImhNone</set>
          </property>
          <property name="text">
-          <string>http://BTS_Sales.rhhsstuco.org</string>
+          <string>http://bts.example.com</string>
          </property>
          <property name="echoMode">
           <enum>QLineEdit::Normal</enum>
@@ -212,6 +212,8 @@ color: black;</string>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="logindialog.qrc"/>
+ </resources>
  <connections/>
 </ui>
